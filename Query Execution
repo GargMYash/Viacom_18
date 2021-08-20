@@ -1,0 +1,59 @@
+Creating Table and Loading Data:
+
+
+create table viacom18(event char(20), city char(20), user_id  char(20), gaid char(20), lr_id char(20), brand char(15), date_stamp_ist date, date_ist timestamp)
+
+>row format delimited
+
+>fields terminated by ',';
+
+ load data local inpath
+    > '/home/cloudera/Desktop/Viacom18.csv'
+> into table viacom18;
+
+Viewers:
+
+select count(distinct(gaid)) AS VIEWER from viacom18 where (substr(date_ist,12)>'12:15:00' AND substr(date_ist,12)<'13:00:00') AND (event = 'Video Watched' OR event='mediaReady');
+
+Following query helps us to count the distinct number of viewers, the attributes ‘Video Watched’ and ‘Media Ready’ are considered as viewers.
+
+
+Visitors:
+
+select count(distinct(gaid)) AS VISITORS from viacom18 where (substr(date_ist,12)>'12:15:00' AND substr(date_ist,12)<'13:00:00') AND (event = 'App Access' OR event='App Opened');
+
+Following query helps us to count the distinct number of visitors, the attributes ‘App Access’ and ‘App Opened’ are considered as visitors.
+
+DISTINCT() function is used in SELECT statement in HIVE to fetch only unique rows. The row does not mean entire row in the table but it means "row" as per column listed in the SELECT statement.
+
+
+Combination of both queries to get the result at the same time.
+
+create table project as
+    > with viewers as (select count(distinct(gaid)) from viacom18 where(substr(date_ist,12)>'12:15:00' AND substr(date_ist,12)<'13:00:00') AND (event='Video Watched' OR event='mediaReady')),
+    > visitors as (select count(distinct(gaid)) from viacom18 where(substr(date_ist,12)>'12:15:00' AND substr(date_ist,12)<'13:00:00') AND (event='App Access' OR event='App Opened'))
+> select * from viewers UNION ALL select * from visitors; 
+
+
+The UNION set operation combines the results of two or more similar sub-queries into a single result set that contains the rows that are returned by all SELECT statements. Data types of the column that you are trying to combine should match. The Hive UNION set operation is different from JOIN, which combine the columns from two tables. 
+Therefore, the following query helps in achieving a combined result at the same time.
+
+
+select * from project;
+
+SELECT statement is used to retrieve the data from a table.SELECT * the simplest query is effectively one which returns the contents of the whole table
+
+
+
+
+Similar Outcomes:
+
+The above query can also be executed with different time combinations (From_time < To_time)
+ 
+with viewers as (select count(distinct(gaid)) from viacom18 where(substr(date_ist,12)>'XX:XX:XX' AND substr(date_ist,12)<'XX:XX:XX') AND (event='Video Watched' OR event='mediaReady')),
+    > visitors as (select count(distinct(gaid)) from viacom18 where(substr(date_ist,12)>'XX:XX:XX' AND substr(date_ist,12)<'XX:XX:XX') AND (event='App Access' OR event='App Opened'))
+> select * from viewers UNION ALL select * from visitors; 
+
+Here ‘XX:XX:XX’ denotes time
+
+
